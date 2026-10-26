@@ -55,13 +55,19 @@ export default function RegisterForm({ onOpenLegal, onSuccess }) {
     // Simulate registration API call
     setTimeout(() => {
       setIsLoading(false);
+      const trimmedName = fullName.trim();
+      const first = trimmedName.split(' ')[0];
+      const initials = trimmedName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
       onSuccess?.({
         type: 'register',
-        fullName: fullName.trim(),
-        phone: `+254${rawPhone}`,
+        fullName: trimmedName,
+        firstName: first,
+        phone: `+254 ${rawPhone.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}`,
         email: email.trim() || null,
+        rating: '5.0 rating',
+        avatarInitials: initials,
       });
-    }, 1000);
+    }, 700);
   };
 
   return (
