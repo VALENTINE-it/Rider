@@ -41,10 +41,14 @@ export default function LoginForm({ onForgotPassword, onSuccess }) {
       setIsLoading(false);
       onSuccess?.({
         type: 'login',
-        phone: `+254${rawPhone}`,
+        phone: `+254 ${rawPhone.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}`,
+        fullName: 'Kevin Mwangi',
+        firstName: 'Kevin',
+        rating: '4.9 rating',
+        avatarInitials: 'KM',
         rememberMe,
       });
-    }, 900);
+    }, 700);
   };
 
   return (
