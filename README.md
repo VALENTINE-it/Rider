@@ -31,7 +31,14 @@ Built directly from design specifications and reference screens featuring a spli
    - Full Name input with icon.
    - Optional Email field with RFC-compliant regex validation.
    - Interactive **Terms of Service & Privacy Policy** modal with Nairobi Boda regulations, safety compliance, and passenger protections.
-5. **Responsive Layout**:
+5. **Post-Login Booking Dashboard ("Your city. Your way.")**:
+   - **Header & Navigation**: Sticky brand bar with terracotta "S" logo, interactive notifications popup, and verified passenger profile pill (`KM` / `Kevin` / `4.9 rating`).
+   - **Interactive Route Booking Card**: Connected pickup and destination fields with vertical dotted route track, GPS locate-me button, Nairobi popular destination autocomplete (Westlands, CBD, Kilimani, Upper Hill, JKIA, Karen), and preset quick pills (`Home`, `Work`, `JKIA`).
+   - **Real-Time Fare & Time Calculation**: Instant fare estimation (`KSh 180 - 240`) and travel duration calculator.
+   - **Interactive Ride Dispatch Simulation**: Realistic Nairobi dispatch modal simulating rider radar search, matched rider card (*Juma Mwangi* • Bajaj Boxer 150 `KMD 821Q`), M-PESA / Cash payment selection, and communication shortcuts.
+   - **Why Rider Benefits Grid**: 3 interactive feature cards (`Minutes away`, `Ride with confidence`, `Clear, fair fares`) with deep-dive modals.
+   - **Safety First Helmet Banner**: Full-width split banner featuring authentic motorcycle rider photography (`KMCJ 289K`) and Rider Boda's 5-Point Safety Promise modal.
+6. **Responsive Layout**:
    - **Desktop (≥ 1024px)**: 50/50 split-screen with full photography hero, transit route mesh overlay, and verified credibility metrics (`4.9 Rating`, `5 min Pickup`, `24/7 Availability`).
    - **Mobile / Tablet (< 1024px)**: Compact top brand banner ensuring inputs and primary CTAs remain immediately visible without pushing forms below the fold.
 
