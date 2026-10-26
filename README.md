@@ -44,12 +44,32 @@ Built directly from design specifications and reference screens featuring a spli
 
 ---
 
+## 📁 Repository Structure
+
+```text
+Rider/
+├── frontend/               # React 19 + Vite + Tailwind CSS frontend
+│   ├── src/
+│   │   ├── assets/         # Photography and graphic assets
+│   │   ├── components/     # UI components (Auth, Dashboard, Modals)
+│   │   ├── App.jsx         # Root app orchestrator
+│   │   └── main.jsx        # Entry point
+│   ├── index.html
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.js
+├── backend/                # Backend API & dispatch services
+│   └── README.md
+├── package.json            # Monorepo management scripts
+└── README.md
+```
+
+---
+
 ## 🛠️ Tech Stack
 
-- **Framework**: React 19 + Vite 8
-- **Styling**: Tailwind CSS 3.4
-- **Icons**: Lucide React
-- **Typography**: Google Fonts (*Plus Jakarta Sans*)
+- **Frontend**: React 19, Vite 8, Tailwind CSS 3.4, Lucide React, Google Fonts (*Plus Jakarta Sans*)
+- **Backend**: API & microservices infrastructure
 
 ---
 
@@ -57,14 +77,22 @@ Built directly from design specifications and reference screens featuring a spli
 
 ### Development Server
 ```bash
-npm install
+# From repository root:
+npm run dev
+
+# Or directly in frontend:
+cd frontend
 npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Production Build & Preview
 ```bash
+# From repository root:
+npm run build:frontend
+
+# Or directly in frontend:
+cd frontend
 npm run build
 npm run preview
 ```
-Runs on [http://localhost:4173](http://localhost:4173).

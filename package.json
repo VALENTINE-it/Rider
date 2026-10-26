@@ -1,0 +1,12 @@
+{
+  "name": "rider-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rider Boda — Monorepo (Frontend & Backend)",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "preview:frontend": "npm run preview --prefix frontend"
+  }
+}
