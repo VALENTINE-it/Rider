@@ -1,1 +1,63 @@
-# Rider
+# Rider Boda — Frontend (React)
+
+A responsive, high-performance React frontend for **Rider Boda**, Nairobi's on-demand motorcycle ride-hailing platform.
+
+Built directly from design specifications and reference screens featuring a split-screen brand hero, Kenyan mobile authentication (+254 standard), interactive password management, accessible modals, and seamless tab transitions.
+
+---
+
+## 🎨 Visual Identity & Design Principles
+
+- **Primary Brand Accent**: Terracotta / Burnt Orange (`#E7532E`, hover `#D44723`) for primary CTA buttons, active tab indicators, and brand logo.
+- **Warm Editorial Cream Background**: `#F8F5EE` for comfortable contrast and reduced eye fatigue.
+- **Deep Forest Overlay**: `#102620` to `#183129` paired with urban Nairobi boda photography by Dwayne Joe (Unsplash).
+- **Amber Gold Highlights**: `#F1B643` for "NAIROBI MOVES WITH US" and headline emphasis.
+- **Typography**: Clean grotesque sans-serif (*Plus Jakarta Sans*) with distinct type scale, sentence-case microcopy, and generous letter spacing on kickers.
+
+---
+
+## 🚀 Key Features
+
+1. **Authentication Tabs**: Seamless switching between **Log in** (`KARIBU TENA`) and **Register** (`JOIN RIDER`) with active indicator and URL sync (`?tab=login` or `?tab=register`).
+2. **Kenyan Phone Field (`+254`)**:
+   - Formats input automatically (e.g. `712 345 678`).
+   - Automatically handles leading `0` or `254` inputs.
+   - Enforces 9-digit Kenyan carrier validation (Safaricom, Airtel, Telkom).
+3. **Password Management**:
+   - Show/hide password visibility toggle with Lucide icons.
+   - Built-in validation feedback for minimum 6 characters.
+   - Interactive **Forgot Password modal** with simulated SMS OTP verification flow.
+4. **Registration Workflow**:
+   - Full Name input with icon.
+   - Optional Email field with RFC-compliant regex validation.
+   - Interactive **Terms of Service & Privacy Policy** modal with Nairobi Boda regulations, safety compliance, and passenger protections.
+5. **Responsive Layout**:
+   - **Desktop (≥ 1024px)**: 50/50 split-screen with full photography hero, transit route mesh overlay, and verified credibility metrics (`4.9 Rating`, `5 min Pickup`, `24/7 Availability`).
+   - **Mobile / Tablet (< 1024px)**: Compact top brand banner ensuring inputs and primary CTAs remain immediately visible without pushing forms below the fold.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: React 19 + Vite 8
+- **Styling**: Tailwind CSS 3.4
+- **Icons**: Lucide React
+- **Typography**: Google Fonts (*Plus Jakarta Sans*)
+
+---
+
+## 💻 Getting Started
+
+### Development Server
+```bash
+npm install
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Production Build & Preview
+```bash
+npm run build
+npm run preview
+```
+Runs on [http://localhost:4173](http://localhost:4173).
