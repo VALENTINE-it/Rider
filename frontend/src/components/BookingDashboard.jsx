@@ -7,7 +7,7 @@ import RideDispatchModal from './RideDispatchModal';
 import SafetyPromiseModal from './SafetyPromiseModal';
 import DashboardFooter from './DashboardFooter';
 
-export default function BookingDashboard({ userSession, onSignOut, onOpenLegal }) {
+export default function BookingDashboard({ userSession, onSignOut, onOpenLegal, onSwitchRole }) {
   const [safetyModalOpen, setSafetyModalOpen] = useState(false);
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
   const [activeRideDetails, setActiveRideDetails] = useState(null);
@@ -27,6 +27,7 @@ export default function BookingDashboard({ userSession, onSignOut, onOpenLegal }
         userSession={userSession}
         onSignOut={onSignOut}
         onOpenSafetyModal={() => setSafetyModalOpen(true)}
+        onSwitchRole={onSwitchRole}
       />
 
       {/* 2. HERO SECTION ("Your city. Your way.") */}
