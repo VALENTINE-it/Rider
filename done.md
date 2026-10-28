@@ -130,3 +130,81 @@ Key Architecture Guarantees:
 ---
 
 ## 4. Automated Verification Results
+
+### A. Go Backend Test Suite
+```bash
+cd backend && go test -v ./...
+```
+**Results:**
+- `TestLoadDefaults`, `TestLoadCustom`: **PASS**
+- `TestJSONResponse`, `TestJSONErrorResponse`: **PASS**
+- `TestHealthEndpoints`: **PASS** (`/health/live`, `/health/ready`)
+- `TestAuth_RegistrationAndCSRF`: **PASS** (Passenger registration succeeds, HttpOnly cookie set, public admin registration rejected with 400)
+- `TestAuth_LoginAndStrictAdminSeparation`: **PASS** (Passenger login succeeds, passenger attempting admin login rejected with 403 Forbidden, valid admin login succeeds)
+- `TestPricingQuoteCalculation`: **PASS** (Authoritative fare formula, minimum fare floor, 0% commission verified)
+- `TestAdminAuthorizationProtection`: **PASS** (Unauthenticated access returns 401, passenger session returns 403 Forbidden, admin session returns 200 OK)
+- `TestRider_AvailabilityEligibilityGate`: **PASS** (Verified rider goes online successfully, unverified rider rejected with 403 Forbidden, approved rider with trial sub goes online successfully)
+- `TestTripLifecycle_EndToEnd`: **PASS** (Full lifecycle: quote calculation → trip booking → spatial dispatch → atomic rider accept → status stepper [arrived → in_progress → completed] → cash payment collection → 0% commission ledger verification)
+- `TestMemoryStore_UserAndCredentials`: **PASS** (Bcrypt password verification, duplicate phone rejection)
+- `TestMemoryStore_Sessions`: **PASS** (Session creation, token hash lookup, revocation)
+- `TestMemoryStore_NearbyEligibleRiders`: **PASS** (PostGIS / Haversine spatial radius query, unverified/offline/busy riders excluded)
+- `TestMemoryStore_AtomicTripAssignmentConcurrency`: **PASS** (10 simultaneous riders race to accept the same trip; exactly 1 succeeds, 9 receive `ErrTripAlreadyAssigned`)
+- `TestMemoryStore_TripStateMachineTransitions`: **PASS** (Legal transitions succeed, illegal transitions rejected, audit events recorded)
+
+### B. React Frontend Test Suite (Vitest + Testing Library)
+```bash
+npm run test:frontend
+```
+**Results (15 Tests Passing across 4 Test Files):**
+- **Strict Admin Separation Invariant** (`src/test/StrictAdminSeparation.test.jsx`): **5/5 PASS**
+  - Asserts zero `/admin` links, buttons, or dashboard shortcuts exist in `ClientLayout`.
+  - Asserts zero `/admin` links, buttons, or dashboard shortcuts exist in `RiderLayout`.
+  - Asserts zero admin links or navigation shortcuts exist on `LandingPage`.
+  - Asserts zero admin links or navigation shortcuts exist on `LoginPage`.
+  - Asserts public registration (`RegisterPage`) does not expose administrator role selection.
+- **Client Booking & Upfront Fare Engine** (`src/test/ClientBooking.test.jsx`): **3/3 PASS**
+  - Renders pickup/destination inputs and fetches server-authoritative upfront fare quote.
+  - Formats KSh fare display with 0% platform commission guarantee.
+  - Nairobi preset hotspot selection triggers real-time route quote recalculation.
+  - Trip booking confirmation dispatches nearest rider and redirects to `/client/dashboard/active`.
+- **Rider Dispatch & Offer Lifecycle** (`src/test/RiderOperations.test.jsx`): **4/4 PASS**
+  - Empty state renders "No Dispatched Offers Right Now".
+  - Dispatched offer card renders upfront fare, route, and 30-second countdown timer.
+  - Offer acceptance atomically triggers `api.trips.acceptOffer` and routes to active trip execution.
+  - Concurrency conflict handling displays sector collision alert when another rider accepts first.
+- **Isolated Admin Authentication Console** (`src/test/AdminLogin.test.jsx`): **3/3 PASS**
+  - Renders isolated administrative console with security access audit warnings.
+  - Successful admin credential authentication redirects to `/admin/dashboard`.
+  - Invalid administrative credentials render alert banner without leaking authorization data.
+
+### C. Compilation & Monorepo Build Verification
+- **Unified Test Command**:
+  ```bash
+  make test
+  ```
+  *Result:* Executes both backend Go test suites and frontend Vitest suites with 100% pass rate.
+- **Backend Binary Build**:
+  ```bash
+  make build-backend
+  ```
+  *Result:* Clean build, executable generated at `backend/bin/api` with 0 warnings/errors.
+- **Frontend Production Build**:
+  ```bash
+  make build-frontend
+  ```
+  *Result:* Clean build (`dist/assets/index-XjacZVqS.js` 449.77 kB, `dist/assets/index-D-2zPqS0.css` 60.48 kB) with 0 warnings/errors.
+
+---
+
+## 5. Pre-Seeded Pilot Accounts for Verification
+
+| Persona | Phone Number | Password | Role / Details | Initial Route |
+|:---|:---|:---|:---|:---|
+| **Passenger** | `+254 712 345 678` | `Pass1234!` | Kevin Mwangi (Rating 4.9) | `/client/dashboard` |
+| **Verified Operator** | `+254 722 458 912` | `Pass1234!` | Juma Mwangi (Bajaj Boxer 150 `KMD 821Q`, Online, Trial Active) | `/rider/dashboard` |
+| **Pending Operator** | `+254 711 998 877` | `Pass1234!` | Peter Ochieng (TVS Star HLX 150 `KMDK 392A`, Documents In Review) | `/rider/dashboard` |
+| **Administrator** | `+254 700 000 001` | `Pass1234!` | Sarah Cherono (Super Admin) | `/admin/dashboard` |
+
+---
+
+## 7. Frontend Redesign & Anti-Pattern Elimination (Authentic Kenyan Transportation Experience)
