@@ -56,3 +56,77 @@ Key Architecture Guarantees:
 ---
 
 ## 3. Detailed Deliverables & Technical Evidence
+
+### 3.1 Backend Architecture (`/backend`)
+- **Domain Models** ([`backend/internal/models/models.go`](file:///home/valentine/Rider/backend/internal/models/models.go)):
+  - Normalized relational types for `User`, `Session`, `PassengerProfile`, `RiderProfile`, `Motorbike`, `VerificationDocument`, `VerificationReview`, `RiderLocation`, `RiderPresence`, `PricingRule`, `FareQuote`, `Trip`, `TripOffer`, `TripEvent`, `SubscriptionPlan`, `RiderSubscription`, `SafetyReport`, and `AuditLog`.
+- **Data Persistence Layer** ([`backend/internal/store`](file:///home/valentine/Rider/backend/internal/store)):
+  - Interface `store.Store` with implementations:
+    - `PostgresStore`: Executes parameterized SQL queries and PostGIS `ST_DWithin` spatial operations conforming to `000001_init_schema.up.sql`.
+    - `MemoryStore`: Thread-safe in-memory transactional store with spatial engine (Haversine formula matching PostGIS), mutex-protected atomic trip assignments, state machine validation, and seed pilot data.
+- **HTTP Routing & API Layer** ([`backend/internal/http`](file:///home/valentine/Rider/backend/internal/http)):
+  - Complete RESTful endpoints conforming to `docs/API.md`:
+    - `GET /health/live`, `GET /health/ready`
+    - `GET /api/v1/auth/csrf`: Cryptographic CSRF token issuance.
+    - `POST /api/v1/auth/register`: Passenger & Rider registration (blocks public admin registration).
+    - `POST /api/v1/auth/login`: Passenger & Rider authentication (sets HttpOnly cookie).
+    - `POST /api/v1/admin/login`: Dedicated Admin authentication (enforces admin role).
+    - `POST /api/v1/auth/logout`: Revokes session token and clears cookie.
+    - `GET /api/v1/auth/me`: Loads authenticated profile.
+    - `POST /api/v1/quotes`: Authoritative upfront fare quote calculation.
+    - `POST /api/v1/trips`: Passenger trip creation with automatic nearby rider discovery.
+    - `GET /api/v1/trips/active`: Returns current active trip for user.
+    - `POST /api/v1/trips/{id}/offers/accept`: Concurrency-safe atomic trip assignment.
+    - `POST /api/v1/trips/{id}/offers/reject`: Rejection handling.
+    - `POST /api/v1/trips/{id}/status`: Validated state machine transitions (`arriving`, `arrived`, `in_progress`, `completed`, `cancelled`).
+    - `POST /api/v1/trips/{id}/payment`: Operator cash collection confirmation.
+    - `POST /api/v1/rider/presence`: Availability toggle with verification and subscription validation.
+    - `POST /api/v1/rider/location`: GPS coordinate updates with WebSocket broadcast.
+    - `GET /api/v1/rider/earnings`: Real earnings calculation (0% platform commission).
+    - `POST /api/v1/safety/reports`: Emergency SOS and incident submission.
+    - `GET /api/v1/admin/overview`: Platform operational KPIs.
+    - `GET /api/v1/admin/passengers`, `PATCH /api/v1/admin/users/{id}/status`: Passenger directory & suspension.
+    - `GET /api/v1/admin/riders`, `POST /api/v1/admin/riders/{id}/review`: Operator vetting review queue.
+    - `GET /api/v1/admin/trips`: Platform-wide trips monitor.
+    - `GET /api/v1/admin/pricing`, `POST /api/v1/admin/pricing`: Dynamic pricing configuration with audit logs.
+    - `GET /api/v1/admin/subscriptions`, `POST /api/v1/admin/subscriptions/plans`, `POST /api/v1/admin/subscriptions/grant`: Subscription plan management.
+    - `GET /api/v1/admin/safety`, `PATCH /api/v1/admin/safety/{id}`: Incident case management.
+    - `GET /api/v1/admin/administrators`, `POST /api/v1/admin/administrators`: Secure admin provisioning.
+    - `GET /api/v1/admin/audit-logs`: Immutable mutation audit trail.
+- **Real-Time WebSocket Hub** ([`backend/internal/websocket/hub.go`](file:///home/valentine/Rider/backend/internal/websocket/hub.go)):
+  - Connection multiplexing, heartbeat ping/pong, user-scoped event broadcasts (`trip_offer`, `trip_assigned`, `trip_status_updated`, `rider_location_updated`, `safety_alert`).
+
+### 3.2 Frontend Architecture (`/frontend`)
+- **Router & Context** ([`frontend/src/App.jsx`](file:///home/valentine/Rider/frontend/src/App.jsx), [`frontend/src/context/AuthContext.jsx`](file:///home/valentine/Rider/frontend/src/context/AuthContext.jsx)):
+  - Role-protected routes with automatic redirects based on user permissions.
+  - Zero admin links in passenger or operator views.
+- **Client Dashboard** (`/client/dashboard/*`):
+  - [Booking Page](file:///home/valentine/Rider/frontend/src/pages/client/ClientBookingPage.jsx): Interactive route input, Nairobi hotspot shortcuts, live SVG route preview, upfront server pricing quote, 0% commission badge.
+  - [Active Trip Page](file:///home/valentine/Rider/frontend/src/pages/client/ClientActiveTripPage.jsx): Live status progression (`searching` → `assigned` → `arrived` → `in_progress` → `completed`), matched rider card (*Juma Mwangi* • Bajaj Boxer 150 `KMD 821Q`), sanitized helmet guarantee badge, cancel ride, and emergency SOS modal.
+  - [Trip History Page](file:///home/valentine/Rider/frontend/src/pages/client/ClientHistoryPage.jsx): List of journeys with official digital receipt inspection modal.
+  - [Payments Page](file:///home/valentine/Rider/frontend/src/pages/client/ClientPaymentsPage.jsx): Direct cash on arrival guidance and Daraja M-Pesa pilot integration notes.
+  - [Profile Page](file:///home/valentine/Rider/frontend/src/pages/client/ClientProfilePage.jsx): Display name management, phone badge, and GDPR/data protection account deletion request workflow.
+  - [Help & Safety Page](file:///home/valentine/Rider/frontend/src/pages/client/ClientHelpPage.jsx): 24/7 Hotline `0700 RIDER`, 5-Point Safety Promise, and support ticket submission form.
+- **Rider Dashboard** (`/rider/dashboard/*`):
+  - [Overview Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderOverviewPage.jsx): Daily cash earnings, completed trip counter, verification status, trial days left, and quick shortcuts.
+  - [Requests Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderRequestsPage.jsx): Dispatched ride offers with animated 30-second countdown timer, route details, offered fare, and atomic Accept / Decline buttons.
+  - [Active Trip Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderActiveTripPage.jsx): Operational execution stepper (Heading to pickup → Arrived at stage → Start ride → Complete trip → Confirm cash fare collected).
+  - [Earnings Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderEarningsPage.jsx): Today, 7-day, and 30-day cash earnings ledger with 0% platform commission guarantee.
+  - [Subscription Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderSubscriptionPage.jsx): Pilot 30-Day Free Trial status, expiry date, and reference monthly/annual tiers.
+  - [Motorbike Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderMotorbikePage.jsx): Vehicle plate number, model, and sanitized passenger helmet requirement.
+  - [Profile Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderProfilePage.jsx): Operator credentials and transport authority vetting documents (National ID, Driving license, Police clearance, Logbook).
+  - [Support Page](file:///home/valentine/Rider/frontend/src/pages/rider/RiderSupportPage.jsx): Central dispatch helpline `0700 RIDER` and operator safety code.
+- **Admin Dashboard** (`/admin/dashboard/*`):
+  - [Overview Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminOverviewPage.jsx): Database-backed KPI metrics (passengers, riders, verified, online, active trips, completed trips, cancelled trips, pending vetting, incidents).
+  - [Passengers Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminPassengersPage.jsx): Passenger search, status filters, and account suspension/reactivation actions.
+  - [Riders Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminRidersPage.jsx): Operator vetting queue with candidate details, motorbike plate/model, submitted document audit, and Approve / Reject / Request Info actions.
+  - [Trips Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminTripsPage.jsx): Real-time platform trip monitor with status filters and route details.
+  - [Subscriptions Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminSubscriptionsPage.jsx): Subscription plan creator (trial days, period, price) and manual operator entitlement grant tool.
+  - [Pricing Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminPricingPage.jsx): Authoritative fare formula editor (Base fare, Per KM, Per Min, Minimum fare) with versioned audit logging.
+  - [Safety Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminSafetyPage.jsx): Incident and SOS ticket queue with status updates (`investigating`, `resolved`, `dismissed`) and action notes.
+  - [Administrators Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminAdministratorsPage.jsx): Internal admin list and secure administrator provisioning modal.
+  - [Settings Page](file:///home/valentine/Rider/frontend/src/pages/admin/AdminSettingsPage.jsx): Immutable audit logs feed and system health monitoring.
+
+---
+
+## 4. Automated Verification Results
