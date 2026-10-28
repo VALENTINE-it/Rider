@@ -19,8 +19,10 @@ build-backend:
 	cd backend && go build -o bin/api cmd/api/main.go
 
 # Tests
+test: test-backend test-frontend
+
 test-frontend:
-	npm run build:frontend
+	npm run test:frontend
 
 test-backend:
 	cd backend && go test ./...
