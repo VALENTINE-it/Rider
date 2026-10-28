@@ -11,23 +11,41 @@ import (
 
 	"github.com/VALENTINE-it/Rider/backend/internal/config"
 	apphttp "github.com/VALENTINE-it/Rider/backend/internal/http"
+	"github.com/VALENTINE-it/Rider/backend/internal/store"
+	appws "github.com/VALENTINE-it/Rider/backend/internal/websocket"
 )
 
 func main() {
 	cfg := config.Load()
 
-	router := apphttp.NewRouter()
-	handler := apphttp.Middleware(cfg.CORSOrigin, router.Routes())
+	// Initialize Storage: Attempt PostgreSQL first, fallback gracefully to in-memory store
+	var dataStore store.Store
+	pgStore, err := store.NewPostgresStore(cfg.DatabaseURL)
+	if err == nil {
+		log.Printf(" Connected to PostgreSQL/PostGIS at %s", cfg.DatabaseURL)
+		dataStore = pgStore
+		defer pgStore.Close()
+	} else {
+		log.Printf("ℹ️  PostgreSQL not reachable (%v). Using in-memory transactional store with spatial engine & seeded pilot data.", err)
+		dataStore = store.NewMemoryStore()
+	}
+
+	// Initialize WebSocket Hub
+	hub := appws.NewHub()
+	go hub.Run()
+
+	// Initialize HTTP Router & Middleware
+	router := apphttp.NewRouter(dataStore, hub)
+	handler := apphttp.Middleware(cfg.CORSOrigin, dataStore, router.Routes())
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      handler,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Channel to listen for errors coming from the listener.
 	serverErrors := make(chan error, 1)
 
 	go func() {
@@ -37,11 +55,9 @@ func main() {
 		serverErrors <- server.ListenAndServe()
 	}()
 
-	// Channel to listen for an interrupt or terminate signal from the OS.
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	// Blocking main and waiting for shutdown or server error.
 	select {
 	case err := <-serverErrors:
 		log.Fatalf("Error starting server: %v", err)
