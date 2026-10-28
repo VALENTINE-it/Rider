@@ -1,7 +1,7 @@
 /**
  * Rider Boda — API Client Service
  * Compliant with docs/API.md (v1.0)
- * Handles { data, meta } envelopes, standard error codes, CSRF, and request IDs.
+ * Uses credentials: 'include' for HttpOnly session cookies, CSRF protection, and standardized envelopes.
  */
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
@@ -15,20 +15,27 @@ let csrfToken = null;
 export async function fetchCsrfToken() {
   try {
     const res = await fetch(`${API_BASE}/auth/csrf`, {
+      credentials: 'include',
       headers: { 'X-Request-ID': generateRequestId() },
     });
     if (res.ok) {
       const json = await res.json();
       csrfToken = json.data?.csrf_token;
     }
-  } catch {
-    csrfToken = 'csrf_local_mock';
+  } catch (e) {
+    console.warn('Failed to fetch CSRF token:', e);
   }
   return csrfToken;
 }
 
 export async function apiRequest(endpoint, options = {}) {
   const reqId = generateRequestId();
+
+  // If making state-changing request and no CSRF token yet, fetch it
+  if (!csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method)) {
+    await fetchCsrfToken();
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     'X-Request-ID': reqId,
@@ -36,98 +43,99 @@ export async function apiRequest(endpoint, options = {}) {
     ...(options.headers || {}),
   };
 
-  try {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-    });
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    credentials: 'include',
+    headers,
+  });
 
-    const body = await res.json().catch(() => null);
+  const body = await res.json().catch(() => null);
 
-    if (!res.ok) {
-      const err = new Error(body?.error?.message || `API Error (${res.status})`);
-      err.code = body?.error?.code || 'UNKNOWN_ERROR';
-      err.status = res.status;
-      err.details = body?.error?.details || [];
-      throw err;
-    }
-
-    return body?.data;
-  } catch (error) {
-    // If backend is unreachable or local development offline, provide graceful simulated response
-    if (error.name === 'TypeError' || error.message?.includes('Failed to fetch')) {
-      return mockFallback(endpoint, options);
-    }
-    throw error;
+  if (!res.ok) {
+    const err = new Error(body?.error?.message || `Request failed (${res.status})`);
+    err.code = body?.error?.code || 'UNKNOWN_ERROR';
+    err.status = res.status;
+    err.details = body?.error?.details || [];
+    throw err;
   }
+
+  return body?.data;
 }
 
-// Fallback simulator matching Go backend responses when offline
-function mockFallback(endpoint, options) {
-  const payload = options.body ? JSON.parse(options.body) : {};
+export const api = {
+  // Auth
+  auth: {
+    csrf: () => fetchCsrfToken(),
+    register: (data) => apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    login: (phone, password) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify({ phone, password }) }),
+    adminLogin: (phone, password) => apiRequest('/admin/login', { method: 'POST', body: JSON.stringify({ phone, password }) }),
+    logout: () => apiRequest('/auth/logout', { method: 'POST' }),
+    me: () => apiRequest('/auth/me', { method: 'GET' }),
+  },
 
-  if (endpoint === '/quotes' && options.method === 'POST') {
-    const dist = payload.distance_km || 3.8;
-    const fareMinor = Math.max(10000, 5000 + Math.round(dist * 3500));
-    return {
-      id: 'quo_mock_' + Math.random().toString(36).substring(2, 8),
-      currency: 'KES',
-      fare_minor: fareMinor,
-      fare_display: `KSh ${(fareMinor / 100).toFixed(0)}`,
-      distance_km: dist,
-      duration_minutes: Math.round(dist * 2.8),
-      pricing_version: 1,
-      commission_rate: '0%',
-      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-    };
-  }
+  // Quotes
+  quotes: {
+    calculate: (data) => apiRequest('/quotes', { method: 'POST', body: JSON.stringify(data) }),
+  },
 
-  if (endpoint === '/trips' && options.method === 'POST') {
-    return {
-      id: 'trp_mock_' + Math.random().toString(36).substring(2, 8),
-      status: 'assigned',
-      pickup_address: payload.pickup_address,
-      dest_address: payload.dest_address,
-      fare_minor: payload.fare_minor,
-      currency: 'KES',
-      rider: {
-        id: 'r_101',
-        name: 'Juma Mwangi',
-        phone: '+254 722 458 912',
-        rating: 4.95,
-        bike: 'Bajaj Boxer 150',
-        plate: 'KMD 821Q',
-      },
-    };
-  }
+  // Trips
+  trips: {
+    create: (data) => apiRequest('/trips', { method: 'POST', body: JSON.stringify(data) }),
+    list: () => apiRequest('/trips', { method: 'GET' }),
+    getActive: () => apiRequest('/trips/active', { method: 'GET' }),
+    get: (id) => apiRequest(`/trips/${id}`, { method: 'GET' }),
+    updateStatus: (id, status, reason = '') =>
+      apiRequest(`/trips/${id}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }),
+    confirmPayment: (id) => apiRequest(`/trips/${id}/payment`, { method: 'POST' }),
+    acceptOffer: (id) => apiRequest(`/trips/${id}/offers/accept`, { method: 'POST' }),
+    rejectOffer: (id) => apiRequest(`/trips/${id}/offers/reject`, { method: 'POST' }),
+  },
 
-  if (endpoint === '/riders/earnings') {
-    return {
-      rider_id: 'r_101',
-      today_cash_minor: 345000,
-      today_cash_display: 'KSh 3,450.00',
-      week_cash_minor: 1890000,
-      week_cash_display: 'KSh 18,900.00',
-      platform_commission: '0% (Retained 100%)',
-      subscription: {
-        status: 'trial',
-        trial_days_left: 24,
-        plan_name: 'Nairobi Pilot 30-Day Free Trial',
-      },
-    };
-  }
+  // Rider
+  rider: {
+    getPresence: () => apiRequest('/auth/me').then((d) => d?.presence),
+    setPresence: (isOnline) => apiRequest('/rider/presence', { method: 'POST', body: JSON.stringify({ is_online: isOnline }) }),
+    updateLocation: (coords) => apiRequest('/rider/location', { method: 'POST', body: JSON.stringify(coords) }),
+    getActiveOffer: () => apiRequest('/rider/offers/active', { method: 'GET' }),
+    getEarnings: () => apiRequest('/rider/earnings', { method: 'GET' }),
+    getSubscription: () => apiRequest('/rider/subscription', { method: 'GET' }),
+    getMotorbike: () => apiRequest('/rider/motorbikes', { method: 'GET' }),
+    updateMotorbike: (data) => apiRequest('/rider/motorbikes', { method: 'POST', body: JSON.stringify(data) }),
+    getDocuments: () => apiRequest('/rider/documents', { method: 'GET' }),
+    uploadDocument: (data) => apiRequest('/rider/documents', { method: 'POST', body: JSON.stringify(data) }),
+  },
 
-  if (endpoint === '/admin/overview') {
-    return {
-      total_passengers: 248,
-      verified_riders: 42,
-      pending_onboarding: 3,
-      completed_trips: 1890,
-      platform_model: '0% Trip Commission (Subscription Based)',
-      safety_rating_avg: 4.92,
-      active_pilot_stages: ['Westlands', 'CBD', 'Kilimani', 'Upper Hill'],
-    };
-  }
+  // Passenger
+  passenger: {
+    getProfile: () => apiRequest('/passenger/profile', { method: 'GET' }),
+    updateProfile: (data) => apiRequest('/passenger/profile', { method: 'PATCH', body: JSON.stringify(data) }),
+  },
 
-  return { status: 'mock_success' };
-}
+  // Safety
+  safety: {
+    report: (data) => apiRequest('/safety/reports', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  // Admin
+  admin: {
+    getOverview: () => apiRequest('/admin/overview', { method: 'GET' }),
+    getPassengers: () => apiRequest('/admin/passengers', { method: 'GET' }),
+    setUserStatus: (id, status, reason = '') =>
+      apiRequest(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, reason }) }),
+    getRiders: (status = '') => apiRequest(`/admin/riders${status ? `?status=${status}` : ''}`, { method: 'GET' }),
+    reviewRider: (id, decision, notes = '') =>
+      apiRequest(`/admin/riders/${id}/review`, { method: 'POST', body: JSON.stringify({ decision, notes }) }),
+    getTrips: (status = '') => apiRequest(`/admin/trips${status ? `?status=${status}` : ''}`, { method: 'GET' }),
+    getPricing: () => apiRequest('/admin/pricing', { method: 'GET' }),
+    updatePricing: (data) => apiRequest('/admin/pricing', { method: 'POST', body: JSON.stringify(data) }),
+    getSubscriptions: () => apiRequest('/admin/subscriptions', { method: 'GET' }),
+    createPlan: (data) => apiRequest('/admin/subscriptions/plans', { method: 'POST', body: JSON.stringify(data) }),
+    grantSubscription: (data) => apiRequest('/admin/subscriptions/grant', { method: 'POST', body: JSON.stringify(data) }),
+    getSafety: () => apiRequest('/admin/safety', { method: 'GET' }),
+    updateSafetyStatus: (id, status, notes = '') =>
+      apiRequest(`/admin/safety/${id}`, { method: 'PATCH', body: JSON.stringify({ status, notes }) }),
+    getAdministrators: () => apiRequest('/admin/administrators', { method: 'GET' }),
+    createAdministrator: (data) => apiRequest('/admin/administrators', { method: 'POST', body: JSON.stringify(data) }),
+    getAuditLogs: () => apiRequest('/admin/audit-logs', { method: 'GET' }),
+  },
+};
