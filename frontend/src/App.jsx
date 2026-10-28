@@ -7,7 +7,9 @@ import ForgotPasswordModal from './components/ForgotPasswordModal';
 import TermsModal from './components/TermsModal';
 import Toast from './components/Toast';
 import BookingDashboard from './components/BookingDashboard';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import RiderDashboard from './components/RiderDashboard';
+import AdminDashboard from './components/AdminDashboard';
+import { Sparkles, ArrowRight, Bike, Shield, Users } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -16,6 +18,13 @@ export default function App() {
     if (tabParam === 'register') return 'register';
     if (window.location.hash === '#register') return 'register';
     return 'login';
+  });
+
+  const [portalRole, setPortalRole] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get('role');
+    if (role === 'rider' || role === 'admin') return role;
+    return 'passenger';
   });
 
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -101,7 +110,61 @@ export default function App() {
     });
   };
 
-  // If user is authenticated, render the full post-login Booking Dashboard
+  // 1. RIDER OPERATOR PORTAL VIEW (docs/PRD.md & docs/TASKS.md M3, M6)
+  if (portalRole === 'rider') {
+    return (
+      <>
+        <RiderDashboard onSwitchRole={setPortalRole} />
+        {/* Floating Quick Switcher */}
+        <div className="fixed bottom-4 right-4 z-50 flex items-center space-x-1.5 bg-gray-900/90 backdrop-blur-md text-white p-1.5 rounded-full shadow-2xl border border-white/20 text-xs">
+          <button
+            type="button"
+            onClick={() => setPortalRole('passenger')}
+            className="px-3 py-1 rounded-full hover:bg-white/20 transition-colors font-bold cursor-pointer"
+          >
+            Passenger
+          </button>
+          <span className="px-3 py-1 rounded-full bg-emerald-600 font-bold">Rider</span>
+          <button
+            type="button"
+            onClick={() => setPortalRole('admin')}
+            className="px-3 py-1 rounded-full hover:bg-white/20 transition-colors font-bold cursor-pointer"
+          >
+            Admin
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // 2. ADMIN OPERATIONS CONSOLE VIEW (docs/PRD.md & docs/TASKS.md M8)
+  if (portalRole === 'admin') {
+    return (
+      <>
+        <AdminDashboard onSwitchRole={setPortalRole} />
+        {/* Floating Quick Switcher */}
+        <div className="fixed bottom-4 right-4 z-50 flex items-center space-x-1.5 bg-gray-900/90 backdrop-blur-md text-white p-1.5 rounded-full shadow-2xl border border-white/20 text-xs">
+          <button
+            type="button"
+            onClick={() => setPortalRole('passenger')}
+            className="px-3 py-1 rounded-full hover:bg-white/20 transition-colors font-bold cursor-pointer"
+          >
+            Passenger
+          </button>
+          <button
+            type="button"
+            onClick={() => setPortalRole('rider')}
+            className="px-3 py-1 rounded-full hover:bg-white/20 transition-colors font-bold cursor-pointer"
+          >
+            Rider
+          </button>
+          <span className="px-3 py-1 rounded-full bg-red-600 font-bold">Admin</span>
+        </div>
+      </>
+    );
+  }
+
+  // 3. PASSENGER LOGGED-IN VIEW
   if (userSession) {
     return (
       <>
@@ -109,6 +172,7 @@ export default function App() {
           userSession={userSession}
           onSignOut={handleSignOut}
           onOpenLegal={handleOpenLegal}
+          onSwitchRole={setPortalRole}
         />
 
         {/* Global Legal & Modals */}
@@ -124,11 +188,30 @@ export default function App() {
           type={toast.type}
           onClose={() => setToast({ message: '', type: 'success' })}
         />
+
+        {/* Floating Role Quick Switcher */}
+        <div className="fixed bottom-4 right-4 z-50 flex items-center space-x-1.5 bg-gray-900/90 backdrop-blur-md text-white p-1.5 rounded-full shadow-2xl border border-white/20 text-xs">
+          <span className="px-3 py-1 rounded-full bg-rider-orange font-bold">Passenger</span>
+          <button
+            type="button"
+            onClick={() => setPortalRole('rider')}
+            className="px-3 py-1 rounded-full hover:bg-white/20 transition-colors font-bold cursor-pointer"
+          >
+            Rider
+          </button>
+          <button
+            type="button"
+            onClick={() => setPortalRole('admin')}
+            className="px-3 py-1 rounded-full hover:bg-white/20 transition-colors font-bold cursor-pointer"
+          >
+            Admin
+          </button>
+        </div>
       </>
     );
   }
 
-  // Otherwise, render the Split-Screen Login / Registration page
+  // 4. PASSENGER SPLIT-SCREEN AUTHENTICATION VIEW
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-rider-cream text-rider-dark selection:bg-rider-orange selection:text-white">
       {/* LEFT COLUMN: Hero Brand Experience (50% on desktop) */}
@@ -178,17 +261,39 @@ export default function App() {
               </div>
             )}
 
-            {/* Quick Demo Shortcut pill */}
-            <div className="mt-8 pt-6 border-t border-rider-border text-center">
-              <button
-                type="button"
-                onClick={handleEnterDemoAsKevin}
-                className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-all shadow-xs hover:shadow cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Quick Preview: Enter Post-Login Dashboard as Kevin</span>
-                <ArrowRight className="w-3.5 h-3.5 text-emerald-600" />
-              </button>
+            {/* Quick Demo Previews for Reviewers */}
+            <div className="mt-8 pt-6 border-t border-rider-border space-y-2.5 text-center">
+              <div>
+                <button
+                  type="button"
+                  onClick={handleEnterDemoAsKevin}
+                  className="w-full inline-flex items-center justify-center space-x-2 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Preview: Passenger Booking Dashboard (as Kevin)</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-emerald-600" />
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setPortalRole('rider')}
+                  className="flex-1 inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-rider-dark text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <Bike className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Rider Portal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPortalRole('admin')}
+                  className="flex-1 inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-rider-dark text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <Shield className="w-3.5 h-3.5 text-red-600" />
+                  <span>Admin Console</span>
+                </button>
+              </div>
             </div>
           </div>
 
