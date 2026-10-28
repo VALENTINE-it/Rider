@@ -282,3 +282,37 @@ The Rider frontend was redesigned to eliminate generic AI-generated aesthetic tr
 ### 7.6 Bolt Kenya Rides Styling & Green Button Transformation
 Following direct reference to [Bolt Kenya Rides](https://bolt.eu/en-ke/rides/), the frontend was updated to mirror Bolt's transportation UI ergonomics:
 - **Brand Action Color**: Adopted signature Bolt green (`#34D186` / hover `#2EB875` with `text-slate-950 font-bold`) across all primary call-to-action buttons.
+- **Pill Geometry**: Standardized on high-usability `rounded-full` pill geometry for primary action buttons:
+  - Landing page: *Find a Ride*, *Sign Up*, *Register as an Operator*, *Go to Dashboard*.
+  - Client dashboard: *Confirm & Request Ride*, *Book a Ride Now*, *Book Another Ride*, preset destination chips.
+  - Rider dashboard: *Accept Ride Now*, *1. Heading to Pickup*, *2. Mark Arrived at Stage*, *3. Start Trip*, *4. Complete Trip*, *ONLINE / OFFLINE toggle*.
+  - Auth screens: *Sign In*, *Create Account*.
+- **Bolt Rides Landing Architecture**:
+  - Clean sticky navigation bar with rounded green brand pill `Rider`.
+  - Hero section featuring `Rider Rides • Kenya` badge, *"Ride with Rider in Kenya"*, side-by-side with upfront ride booking card and smooth rounded media container (`rounded-3xl`).
+  - *"Why ride with Rider in Kenya?"* 3-card feature grid with clean numbered badges.
+  - *"Drive with Rider: Keep 100% of your earnings"* Bolt-style dark card for operator recruitment.
+- **Verification**: 100% of Vitest frontend tests and Go backend tests pass; Vite production build compiles in 4.81s with zero errors.
+
+---
+
+## 8. How to Run Locally
+
+### Start Backend:
+```bash
+cd backend
+go run cmd/api/main.go
+```
+*API Base:* `http://localhost:8080/api/v1`  
+*Health Check:* `http://localhost:8080/health/live`  
+*WebSocket:* `ws://localhost:8080/api/v1/ws`
+
+### Start Frontend:
+```bash
+npm run dev
+```
+*Application URL:* `http://localhost:5173`  
+*Client Dashboard:* `http://localhost:5173/client/dashboard`  
+*Rider Dashboard:* `http://localhost:5173/rider/dashboard`  
+*Admin Console:* `http://localhost:5173/admin/login` → `http://localhost:5173/admin/dashboard`
+
