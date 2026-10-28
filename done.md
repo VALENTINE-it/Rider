@@ -208,3 +208,77 @@ npm run test:frontend
 ---
 
 ## 7. Frontend Redesign & Anti-Pattern Elimination (Authentic Kenyan Transportation Experience)
+
+### 7.1 Context & Objective
+The Rider frontend was redesigned to eliminate generic AI-generated aesthetic tropes and transform the application into an authentic, practical, trustworthy Kenyan motorbike ride-hailing platform. The redesign drew inspiration from established transportation products (such as Bolt and Uber) regarding usability, operational clarity, and information hierarchy, while creating a distinct identity tailored to Nairobi's boda-boda ecosystem.
+
+### 7.2 Eliminated AI-Generated Design Anti-Patterns
+1. **Oversized Hero Headlines & Randomly Highlighted Words**:
+   - Replaced multi-line slogan headlines with clear, functional transportation utility titles (e.g., *"Motorbike ride-hailing across Nairobi"*).
+   - Removed artificial highlight spans (`text-orange-500`, `bg-gradient-to-r`).
+2. **Excessive Rounded Cards & Bulbous Geometry**:
+   - Eliminated all instances of `rounded-2xl` and `rounded-3xl` across cards, modal containers, and inputs.
+   - Standardized on restrained, professional radii: `rounded-md` (4px/6px) for inputs and buttons, `rounded-lg` (8px) for cards and modals.
+3. **Floating Marketing Widgets & Artificial Statistics**:
+   - Completely removed the floating "Popular Nairobi Stages" card and mock metrics ("4.9/5 satisfaction", "30,000+ rides", "3-minute pickup").
+   - Displayed only real operational facts, genuine safety requirements, and verified system data.
+4. **Unnecessary Gradients & Excessive Shadows**:
+   - Replaced noisy multi-stop gradients with solid clean white (`#ffffff` / `bg-white`) backgrounds for primary views.
+   - Replaced deep, muddy drop shadows with minimal `shadow-sm` and crisp, subtle borders (`border-slate-200` in light mode, `border-slate-800` in admin dark mode).
+5. **Hyperactive & Distracting Animations**:
+   - Stripped away `animate-bounce`, `animate-ping`, and pulsating offer cards (`animate-pulse`).
+   - Replaced with calm, functional progress bars, SVG route previews, and clean numerical countdowns.
+6. **Repetitive Icon-and-Text Marketing Features**:
+   - Replaced generic icon grids with a practical 3-step "How It Works" guide, genuine helmet/safety compliance standards, and a dedicated operator recruitment section explaining the 0% commission subscription model.
+
+### 7.3 Restrained Visual Design System
+- **Background**: Solid clean white (`#ffffff` / `bg-white`) for public and client experiences; dark operational slate (`#090d16` / `bg-slate-900`) for the admin console.
+- **Primary Typography**: Dark navy (`#0f172a` / `text-slate-900`), professional system sans-serif font stack prioritizing legibility over visual drama.
+- **Main Action Accent**: Nairobi orange (`#ea580c` / `bg-orange-600 hover:bg-orange-700` with `text-white`) applied consistently for primary call-to-actions.
+- **Secondary Content**: Neutral slate gray (`#64748b` / `text-slate-500`, `#e2e8f0` / `border-slate-200`).
+- **Success State Green**: Strictly reserved for meaningful operational states (`#059669` / `text-emerald-700 bg-emerald-50`), such as "Online", "Verified", "Trip Completed", and "Active".
+
+### 7.4 Scope of Redesigned Screens (27 Files)
+- **Public Experiences**:
+  - `LandingPage.jsx`: 10-point required structure; authentic boda-boda photography (`hero-clean.jpg`); functional pickup and destination input form with instant quote trigger; practical safety standards; zero-commission operator recruitment section; minimal footer.
+  - `LoginPage.jsx` & `RegisterPage.jsx`: Clean dual-persona forms (Passenger / Operator) with subtle borders, moderate radii, and no marketing bloat.
+  - `AdminLoginPage.jsx`: Isolated institutional console with high-security warning banners; preserved test anchor button `Authenticate & Enter Console`.
+- **Layout Shells**:
+  - `ClientLayout.jsx`: Responsive navigation, user display name, phone badge, zero admin shortcuts.
+  - `RiderLayout.jsx`: Mobile-first navigation, real-time Online/Offline toggle, trial status pill, zero admin shortcuts.
+  - `AdminLayout.jsx`: Restrained operational sidebar with muted badges and clear section groupings.
+- **Client Dashboard**:
+  - `ClientBookingPage.jsx`: Map-first layout, Nairobi transit presets, SVG route preview, upfront fare calculation (`KSh 180.00`, 0% platform commission).
+  - `ClientActiveTripPage.jsx`: Clean status stepper (`searching` → `assigned` → `arrived` → `in_progress` → `completed`), matched rider card, sanitized passenger helmet guarantee, emergency SOS modal.
+  - `ClientHistoryPage.jsx`: Clean table of completed rides with digital receipt inspector modal.
+  - `ClientPaymentsPage.jsx`: Direct cash payment guidance and M-Pesa Daraja pilot integration notice.
+  - `ClientProfilePage.jsx`: Passenger profile management and account deletion modal.
+  - `ClientHelpPage.jsx`: Nairobi emergency hotline `0700 RIDER` and safety standards.
+- **Rider Dashboard**:
+  - `RiderOverviewPage.jsx`: Daily earnings ledger, trip counter, online status bar, clean quick shortcuts.
+  - `RiderRequestsPage.jsx`: Incoming ride offer card with upfront fare, route details, 30s countdown bar, atomic Accept / Decline buttons.
+  - `RiderActiveTripPage.jsx`: 4-step execution stepper (Heading to pickup → Arrived at stage → Start ride → Complete trip → Confirm cash fare collected).
+  - `RiderEarningsPage.jsx`: Today, 7-day, 30-day cash ledger with 0% platform commission guarantee.
+  - `RiderSubscriptionPage.jsx`: Pilot 30-Day Free Trial badge and transparent monthly/annual tier pricing.
+  - `RiderMotorbikePage.jsx`: Registration plate and model form with passenger helmet compliance notice.
+  - `RiderHistoryPage.jsx`: Clean table of reconciled trips with subtle borders.
+  - `RiderProfilePage.jsx`: Operator credentials and transport authority vetting documents.
+  - `RiderSupportPage.jsx`: Dispatch hotline `0700 RIDER` and operator safety code.
+- **Admin Dashboard**:
+  - `AdminOverviewPage.jsx`: Restrained KPI cards and Go monolithic core operational note.
+  - `AdminPassengersPage.jsx`: Passenger directory and account suspension/reactivation actions.
+  - `AdminRidersPage.jsx`: Operator vetting review queue with document audit and Approve / Reject / Request Info actions.
+  - `AdminTripsPage.jsx`: Real-time dispatch table with status dropdown and search.
+  - `AdminSubscriptionsPage.jsx`: Subscription plan editor and manual entitlement grant modal.
+  - `AdminPricingPage.jsx`: Base fare, per km, per min pricing rule publisher.
+  - `AdminSafetyPage.jsx`: SOS incident triage and investigation notes.
+  - `AdminAdministratorsPage.jsx`: Admin directory and administrator provisioning modal.
+  - `AdminSettingsPage.jsx`: Immutable audit logs and system health indicators.
+
+### 7.5 Verification Evidence
+- **Backend Tests (`go test -v ./...`)**: 100% Pass across all 12 packages (14 test cases including atomic trip concurrency and full end-to-end trip lifecycles).
+- **Frontend Tests (`npm run test:frontend`)**: 100% Pass across all 4 suites (15 test cases covering Strict Admin Separation, Client Booking, Rider Operations, Admin Login).
+- **Frontend Production Build (`npm run build:frontend`)**: Built in 5.02s with 0 errors and 0 warnings (`dist/assets/index-0gdUTr77.js` 452.64 kB, `dist/assets/index-uJyJDNrs.css` 56.32 kB).
+### 7.6 Bolt Kenya Rides Styling & Green Button Transformation
+Following direct reference to [Bolt Kenya Rides](https://bolt.eu/en-ke/rides/), the frontend was updated to mirror Bolt's transportation UI ergonomics:
+- **Brand Action Color**: Adopted signature Bolt green (`#34D186` / hover `#2EB875` with `text-slate-950 font-bold`) across all primary call-to-action buttons.
