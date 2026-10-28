@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, LogOut, User, History, CreditCard, Shield, ChevronDown, CheckCircle2 } from 'lucide-react';
 
-export default function DashboardNavbar({ userSession, onSignOut, onOpenSafetyModal }) {
+export default function DashboardNavbar({ userSession, onSignOut, onOpenSafetyModal, onSwitchRole }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -186,6 +186,32 @@ export default function DashboardNavbar({ userSession, onSignOut, onOpenSafetyMo
                 {/* Navigation items */}
                 <div className="py-1 text-xs font-medium text-gray-700 divide-y divide-gray-50">
                   <div className="py-1">
+                    {onSwitchRole && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            onSwitchRole('rider');
+                          }}
+                          className="w-full flex items-center space-x-2.5 px-4 py-2 hover:bg-emerald-50 text-emerald-800 text-left font-bold cursor-pointer"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <span>Switch to Rider Operator Portal</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            onSwitchRole('admin');
+                          }}
+                          className="w-full flex items-center space-x-2.5 px-4 py-2 hover:bg-red-50 text-red-800 text-left font-bold cursor-pointer"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-red-500" />
+                          <span>Switch to Admin Console</span>
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
                       onClick={() => setProfileMenuOpen(false)}
